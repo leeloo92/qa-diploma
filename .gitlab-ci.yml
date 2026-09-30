@@ -1,0 +1,38 @@
+stages:
+  - test
+pw:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.57.0-noble
+  variables:
+    ALLURE_ENDPOINT: "https://allure.qa.guru/"
+    ALLURE_PROJECT_ID: "5383"
+    ALLURE_RESULTS: "./allure-results"
+  before_script:
+    # Подготавливаем окружение
+    - apt-get update && apt-get install -y --no-install-recommends openjdk-17-jre-headless
+    - npm i
+    - npx playwright install --with-deps
+    - curl -fsSL https://github.com/allure-framework/allurectl/releases/latest/download/allurectl_linux_amd64 -o allurectl
+    - chmod +x allurectl
+  script:
+    - test -n "$ALLURE_TOKEN" || (echo "ALLURE_TOKEN is missing"; exit 1)
+    - test -n "$TELEGRAM_BOT_TOKEN" || (echo "TELEGRAM_BOT_TOKEN is missing"; exit 1)
+    - test -n "$TELEGRAM_CHAT_ID" || (echo "TELEGRAM_CHAT_ID is missing"; exit 1)
+    - ./allurectl --log debug watch -- npm test
+  allow_failure: false
+  after_script:
+    - |
+      set -e
+      if [ ! -d "${ALLURE_RESULTS}" ] || [ -z "$(find "${ALLURE_RESULTS}" -type f -name '*-result.json' -print -quit)" ]; then
+        echo "Allure results are missing; Telegram notification skipped"
+        exit 0
+      fi
+      npx --yes allure-commandline generate "${ALLURE_RESULTS}" --clean -o ./allure-report
+      npx --yes @qa-guru/allure-notifications@6.2.2 send \
+        --config notifications/telegram.json \
+        --live
+  artifacts:
+    when: always
+    paths:
+      - ./allure-results
+      - ./allure-report

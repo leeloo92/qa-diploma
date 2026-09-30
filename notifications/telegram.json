@@ -1,0 +1,19 @@
+{
+  "base": {
+    "logo": "",
+    "project": "qa-diploma",
+    "environment": "DEV",
+    "reportLink": "https://allure.qa.guru",
+    "language": "en",
+    "allureFolder": "../allure-report/",
+    "allureResultsFolder": "../allure-results/",
+    "enableChart": true,
+    "enableSuitesPublishing": false,
+    "customData": {}
+  },
+  "telegram": {
+    "token": "${TELEGRAM_BOT_TOKEN}",
+    "chat": "${TELEGRAM_CHAT_ID}",
+    "replyTo": ""
+  }
+}
